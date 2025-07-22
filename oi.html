@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>🌟 Trading Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+  .selected {
+    transform: scale(1.05);
+    background-color: #2563EB;
+    outline: 4px solid #1E3A8A;
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .pet-image {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+  }
+
+  /* NOVO CSS PARA OS CONTROLES DE QUANTIDADE */
+  .quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+  }
+  
+  .quantity-input {
+    width: 40px !important;
+    height: 25px !important;
+    padding: 0 3px !important;
+    font-size: 14px !important;
+    text-align: center;
+    margin: 0;
+  }
+  
+  .decrease, .increase {
+    width: 25px !important;
+    height: 25px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin: 0;
+  }
+</style>
+</head>
+<body class="bg-gradient-to-r from-blue-100 to-blue-200 font-sans min-h-screen flex flex-col items-center">
+
+  <!-- Header -->
+  <header class="text-center py-10">
+    <h1 class="text-6xl font-bold">🌟 Trading Hub</h1>
+
+    <p class="text-xl font-bold">Selecione os pets que queira vender!</p>
+  </header>
+
+  <!-- Grid -->
+  <main class="max-w-6xl w-full px-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8" id="cardsContainer"></main>
+
+  <!-- Botão Confirmar -->
+  <button id="confirmBtn" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition mb-8">
+    Confirmar seleção
+  </button>
+
+  <!-- Modal Aviso -->
+  <div id="warningModal" class="fixed inset-0 hidden bg-black bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 fade-in text-center">
+      <h2 class="text-2xl font-bold mb-4">⚠️ Aviso!</h2>
+      <p class="text-gray-700 mb-6">Estamos comprando pets por <strong>sheckless</strong>, ou seja, entregamos sheckless em troca de pets...</p>
+      <button onclick="showFinalModal()" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 font-semibold">OK</button>
+    </div>
+  </div>
+
+  <!-- Modal Final -->
+  <div id="finalModal" class="fixed inset-0 hidden bg-black bg-opacity-50 items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full p-6 fade-in">
+      <h2 class="text-2xl font-bold mb-4 text-center">Finalizar Pedido</h2>
+      <ul id="selectedList" class="mb-4 space-y-2"></ul>
+      <input type="text" id="playerName" placeholder="Nick no Roblox" class="w-full border rounded px-4 py-2 mb-2" />
+      <input type="text" id="socialNick" placeholder="Discord ou TikTok" class="w-full border rounded px-4 py-2 mb-4" />
+      <p class="font-bold text-lg mb-4">Total: <span id="totalText">0</span></p>
+      <div class="flex justify-end gap-4">
+        <button onclick="closeModals()" class="bg-gray-300 px-4 py-2 rounded">Fechar</button>
+        <button onclick="sendOrder()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Enviar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center text-sm text-gray-500 py-6">
+    © 2025 Trading Hub. Todos os direitos reservados.
+  </footer>
+
+  <script>
+    // Lista completa de itens com imagens
+    const items = [
+      { 
+        nome: "Dragonfly", 
+        valor: "3.7 QD", 
+        imagem: "https://cdn.nookazon.com/growagarden/Pets/Dragonfly.png" 
+      },
+      { 
+        nome: "Spinossaurus", 
+        valor: "3.7 QD", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/2/24/Spinosaurus.png" 
+      },
+      { 
+        nome: "Fennec Fox", 
+        valor: "7.4 QD", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/e/e8/FennecFoxIcon.png" 
+      },
+      { 
+        nome: "Disco Bee", 
+        valor: "7.4 QD", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/f/f2/DiscoBeeIcon.gif" 
+      },
+      { 
+        nome: "Mimic Octopus", 
+        valor: "744 T", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/0/00/MimicOctopusIcon.webp" 
+      },
+      { 
+        nome: "Butterfly", 
+        valor: "3.7 QD", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/1/18/Thy_Butterfly_V2.png" 
+      },
+      { 
+        nome: "Raccoon", 
+        valor: "7.4 QD", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/5/54/Raccon_Better_Quality.png" 
+      },
+      { 
+        nome: "T-Rex", 
+        valor: "744 T", 
+        imagem: "https://static.wikia.nocookie.net/growagarden/images/f/f8/T-Rex.png" 
+      }
+    ];
+
+    const container = document.getElementById("cardsContainer");
+    const selectedItems = new Map();
+
+    // Formatador de valores
+    function formatValue(totalT, totalQD) {
+      // Converter T para QD se passar de 1000T
+      if (totalT >= 1000) {
+        const convertedQD = Math.floor(totalT / 1000);
+        totalQD += convertedQD;
+        totalT = totalT % 1000;
+      }
+      
+      // Limitar a 999 no máximo
+      totalQD = Math.min(totalQD, 999);
+      totalT = Math.min(totalT, 999);
+      
+      // Formatar com até 1 casa decimal
+      totalQD = parseFloat(totalQD.toFixed(1));
+      totalT = Math.round(totalT);
+      
+      return {
+        qd: totalQD,
+        t: totalT,
+        text: `${totalQD} QD + ${totalT} T`
+      };
+    }
+
+    // Criar os cards na página
+    function createCards() {
+      container.innerHTML = "";
+      
+      items.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "bg-blue-50 rounded-2xl shadow-xl p-4 transition transform cursor-pointer hover:scale-105 hover:shadow-2xl flex flex-col items-center";
+        card.innerHTML = `
+          <img src="${item.imagem}" alt="${item.nome}" class="pet-image">
+          <h2 class="text-xl font-semibold mt-2 text-gray-800">${item.nome}</h2>
+          <p class="text-2xl font-bold text-green-600 mt-1">${item.valor}</p>
+          <div class="quantity-control mt-2">
+            <button class="decrease bg-gray-200 px-2 rounded">-</button>
+            <input type="number" min="0" value="0" class="quantity-input border rounded">
+            <button class="increase bg-gray-200 px-2 rounded">+</button>
+          </div>
+        `;
+        
+        const input = card.querySelector(".quantity-input");
+        const decreaseBtn = card.querySelector(".decrease");
+        const increaseBtn = card.querySelector(".increase");
+        
+        // Controles de quantidade
+        decreaseBtn.onclick = (e) => {
+          e.stopPropagation();
+          if (parseInt(input.value) > 0) {
+            input.value = parseInt(input.value) - 1;
+            updateSelection(index, parseInt(input.value));
+          }
+        };
+        
+        increaseBtn.onclick = (e) => {
+          e.stopPropagation();
+          input.value = parseInt(input.value) + 1;
+          updateSelection(index, parseInt(input.value));
+        };
+        
+        input.onchange = () => {
+          updateSelection(index, parseInt(input.value) || 0);
+        };
+        
+        card.onclick = (e) => {
+  // Só aumenta se o clique não foi em um botão ou input
+  if (!e.target.classList.contains('increase') && 
+      !e.target.classList.contains('decrease') &&
+      e.target.tagName !== 'INPUT') {
+    input.value = parseInt(input.value) + 1;
+    updateSelection(index, parseInt(input.value));
+  }
+};
+        
+        container.appendChild(card);
+      });
+    }
+
+    // Atualizar seleção
+    function updateSelection(index, quantity) {
+      if (quantity > 0) {
+        selectedItems.set(index, quantity);
+        container.children[index].classList.add("selected");
+      } else {
+        selectedItems.delete(index);
+        container.children[index].classList.remove("selected");
+      }
+    }
+
+    // Mostrar modal final
+    function showFinalModal() {
+      const list = document.getElementById("selectedList");
+      list.innerHTML = "";
+      let totalQD = 0, totalT = 0;
+
+      selectedItems.forEach((quantity, index) => {
+        const item = items[index];
+        const li = document.createElement("li");
+        li.className = "flex items-center justify-between";
+        li.innerHTML = `
+          <div class="flex items-center">
+            <img src="${item.imagem}" alt="${item.nome}" class="w-8 h-8 mr-2">
+            <span>${item.nome}</span>
+          </div>
+          <div>
+            <span class="font-semibold">${quantity}x — ${item.valor}</span>
+          </div>
+        `;
+        list.appendChild(li);
+
+        const value = parseFloat(item.valor);
+        if (item.valor.includes("QD")) {
+          totalQD += value * quantity;
+        } else {
+          totalT += value * quantity;
+        }
+      });
+
+      const formatted = formatValue(totalT, totalQD);
+      document.getElementById("totalText").textContent = formatted.text;
+      
+      document.getElementById("warningModal").classList.add("hidden");
+      document.getElementById("finalModal").classList.remove("hidden");
+      document.getElementById("finalModal").classList.add("flex");
+    }
+
+    // Fechar modais
+    function closeModals() {
+      document.getElementById("warningModal").classList.add("hidden");
+      document.getElementById("finalModal").classList.add("hidden");
+    }
+
+    // Enviar pedido para o Discord
+    async function sendOrder() {
+      const playerName = document.getElementById("playerName").value.trim();
+      const socialNick = document.getElementById("socialNick").value.trim();
+      if (!playerName || !socialNick) return alert("Preencha todos os campos.");
+
+      const now = new Date();
+      const dataFormatada = now.toLocaleDateString("pt-BR");
+      const horaFormatada = now.toLocaleTimeString("pt-BR", { hour: '2-digit', minute: '2-digit' });
+
+      let totalQD = 0, totalT = 0;
+      const itensSelecionados = [];
+      
+      selectedItems.forEach((quantity, index) => {
+        const item = items[index];
+        itensSelecionados.push(`[🔗](${item.imagem}) **${item.nome}** (${quantity}x) — ${item.valor}`);
+        
+        const value = parseFloat(item.valor);
+        if (item.valor.includes("QD")) {
+          totalQD += value * quantity;
+        } else {
+          totalT += value * quantity;
+        }
+      });
+
+      const formatted = formatValue(totalT, totalQD);
+
+      const embed = {
+        title: "🛒 Nova Compra Recebida - Trading Hub",
+        color: 3447003,
+        thumbnail: {
+          url: "https://static.wikia.nocookie.net/growagarden/images/f/f8/T-Rex.png"
+        },
+        fields: [
+          {
+            name: "👤 Informações do Comprador",
+            value: `• **Roblox:** ${playerName}\n• **Contato:** ${socialNick}`,
+            inline: false
+          },
+          {
+            name: `📦 Itens Comprados (${selectedItems.size})`,
+            value: itensSelecionados.join("\n\n") || "Nenhum item selecionado",
+            inline: false
+          },
+          {
+            name: "💰 Valor Total",
+            value: `**${formatted.qd} QD** + **${formatted.t} T**`,
+            inline: false
+          }
+        ],
+        footer: {
+          text: `Trading Hub • ${dataFormatada} ${horaFormatada}`,
+          icon_url: "https://cdn.nookazon.com/growagarden/Pets/Dragonfly.png"
+        }
+      };
+
+      try {
+        await fetch("https://discord.com/api/webhooks/1381436013288886334/WnFyWfw8XUa4LNczlcDBEND7ZXRQ7jPl88lFobGwvmBVZR_TPjyXulcE7C4Y_bAEzMzC", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            content: "@here • Nova compra realizada!",
+            embeds: [embed]
+          })
+        });
+
+        alert("✅ Pedido enviado com sucesso!");
+        closeModals();
+        location.reload();
+      } catch (error) {
+        console.error("Erro ao enviar para o Discord:", error);
+        alert("❌ Não foi possível enviar o pedido. Tente novamente.");
+      }
+    }
+
+    // Inicializar a página
+    window.onload = function() {
+      createCards();
+      
+      document.getElementById("confirmBtn").onclick = () => {
+        if (selectedItems.size === 0) return alert("Selecione pelo menos um item.");
+        document.getElementById("warningModal").classList.remove("hidden");
+        document.getElementById("warningModal").classList.add("flex");
+      };
+    };
+  </script>
+</body>
+</html>
